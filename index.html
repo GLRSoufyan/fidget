@@ -1,1 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Four Fidget-like UX Designs</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            color: white;
+            text-align: center;
+            overflow: hidden;
+        }
 
+        .quadrant {
+            width: 50%;
+            height: 50vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .q1 {
+            background-color: #e75a7c;
+        }
+
+        .q2 {
+            background-color: #5a87ab;
+        }
+
+        .q3 {
+            background-color: #6a4c93;
+        }
+
+        .q4 {
+            background-color: #93c45a;
+        }
+
+        .spinner {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            transform-origin: center;
+            cursor: pointer;
+        }
+
+        .spinner::after {
+            content: "";
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            top: 10px;
+        }
+
+        .bubble-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: translate(-50%, -50%);
+        }
+
+        .slider {
+            width: 200px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .slider-thumb {
+            width: 30px;
+            height: 30px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            left: 50%;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 50px);
+            grid-template-rows: repeat(4, 50px);
+            gap: 5px;
+        }
+
+        .cell {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .label {
+            position: absolute;
+            bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="quadrant q1">
+        <div class="spinner" id="spinner"></div>
+        <div class="label">Irritant</div>
+    </div>
+
+    <div class="quadrant q2">
+        <div class="bubble-container" id="bubbleContainer"></div>
+        <div class="label">Mooi</div>
+    </div>
+
+    <div class="quadrant q3">
+        <div class="slider" id="slider">
+            <div class="slider-thumb" id="sliderThumb"></div>
+        </div>
+        <div class="label">Ontspannen</div>
+    </div>
+
+    <div class="quadrant q4">
+        <div class="grid" id="grid"></div>
+        <div class="label">Energie gevend</div>
+    </div>
+
+    <script>
+        const spinner = document.getElementById('spinner');
+        let spinnerAngle = 0;
+        let spinnerVelocity = 0;
+        let isDraggingSpinner = false;
+        let lastSpinnerPosition = { x: 0, y: 0 };
+
+        spinner.addEventListener('mousedown', (e) => {
+            isDraggingSpinner = true;
+            const rect = spinner.getBoundingClientRect();
+            lastSpinnerPosition = {
+                x: e.clientX - rect.left - rect.width/2,
+                y: e.clientY - rect.top - rect.height/2
+            };
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDraggingSpinner) {
+                const rect = spinner.getBoundingClientRect();
+                const currentPos = {
+                    x: e.clientX - rect.left - rect.width/2,
+                    y: e.clientY - rect.top - rect.height/2
+                };
+                
+                const angle = Math.atan2(currentPos.y, currentPos.x) - Math.atan2(lastSpinnerPosition.y, lastSpinnerPosition.x);
+                spinnerVelocity = angle * 20;
+                spinnerAngle += angle * 20;
+                
+                spinner.style.transform = `rotate(${spinnerAngle}rad)`;
+                
+                lastSpinnerPosition = currentPos;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDraggingSpinner = false;
+        });
+
+        function animateSpinner() {
+            if (!isDraggingSpinner) {
+                spinnerVelocity *= 0.95;
+                spinnerAngle += spinnerVelocity;
+                spinner.style.transform = `rotate(${spinnerAngle}rad)`;
+            }
+            requestAnimationFrame(animateSpinner);
+        }
+        animateSpinner();
+
+        const bubbleContainer = document.getElementById('bubbleContainer');
+        let bubbles = [];
+
+        bubbleContainer.addEventListener('mousemove', (e) => {
+            const rect = bubbleContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            createBubble(x, y);
+        });
+
+        function createBubble(x, y) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.left = `${x}px`;
+            bubble.style.top = `${y}px`;
+            
+            const size = Math.random() * 30 + 10;
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            
+            bubbleContainer.appendChild(bubble);
+            bubbles.push({
+                element: bubble,
+                size,
+                x,
+                y,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                life: 100
+            });
+            
+            if (bubbles.length > 30) {
+                bubbleContainer.removeChild(bubbles[0].element);
+                bubbles.shift();
+            }
+        }
+
+        function animateBubbles() {
+            bubbles.forEach((bubble, index) => {
+                bubble.x += bubble.vx;
+                bubble.y += bubble.vy;
+                bubble.life -= 1;
+                
+                bubble.element.style.left = `${bubble.x}px`;
+                bubble.element.style.top = `${bubble.y}px`;
+                bubble.element.style.opacity = bubble.life / 100;
+                
+                if (bubble.life <= 0) {
+                    bubbleContainer.removeChild(bubble.element);
+                    bubbles.splice(index, 1);
+                }
+            });
+            requestAnimationFrame(animateBubbles);
+        }
+        animateBubbles();
+
+        const slider = document.getElementById('slider');
+        const sliderThumb = document.getElementById('sliderThumb');
+        let isDraggingSlider = false;
+
+        slider.addEventListener('mousedown', (e) => {
+            isDraggingSlider = true;
+            moveSlider(e);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDraggingSlider) {
+                moveSlider(e);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDraggingSlider = false;
+        });
+
+        function moveSlider(e) {
+            const rect = slider.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            
+            if (x < 0) x = 0;
+            if (x > rect.width) x = rect.width;
+            
+            const percentage = (x / rect.width) * 100;
+            sliderThumb.style.left = `${percentage}%`;
+            
+            const q3 = document.querySelector('.q3');
+            const hue = 270 - percentage * 0.5;
+            q3.style.backgroundColor = `hsl(${hue}, 38%, 44%)`;
+        }
+
+        const grid = document.getElementById('grid');
+        
+        for (let i = 0; i < 16; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            
+            cell.addEventListener('mouseenter', () => {
+                cell.style.background = 'rgba(255, 255, 255, 0.8)';
+            });
+            
+            cell.addEventListener('mouseleave', () => {
+                setTimeout(() => {
+                    cell.style.background = 'rgba(255, 255, 255, 0.3)';
+                }, 500);
+            });
+            
+            grid.appendChild(cell);
+        }
+    </script>
+</body>
+</html>
